@@ -9,5 +9,6 @@ pub fn main() {
 
     let x = crypto::hex2u8(input);
 
-    println!("{} = {:?}", input, x)
+    println!("{} = Array {:?}", input, x);
+    println!("{} = String '{}'", input, String::from_utf8(x).unwrap());
 }
