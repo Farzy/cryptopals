@@ -35,6 +35,10 @@ pub fn hex2u8(input: &str) -> Vec<u8> {
 /// assert_eq!(String::from("QUJD"), crypto::base64_encode_u8(&[65, 66, 67]));
 /// assert_eq!(String::from("SGVsbG8sIHdvcmxkIQ=="), crypto::base64_encode_u8("Hello, world!".as_bytes()));
 /// ```
+///
+/// # References
+///
+/// This code is inspired by this article: https://levelup.gitconnected.com/implementing-base64-in-rust-34ef6db1e73a
 pub fn base64_encode_u8(bytes: &[u8]) -> String {
     bytes
         .chunks(3)
