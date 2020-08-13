@@ -100,6 +100,25 @@ pub fn base64_encode_u8(bytes: &[u8]) -> String {
         .into()
 }
 
+/// XOR two equal length arrays of bytes
+///
+/// # Examples
+///
+/// ```
+/// use cryptopals::crypto;
+///
+/// assert_eq!(vec![0], crypto::xor_arrays(&vec![0], &vec![0]));
+/// assert_eq!(
+///    vec![0b11111111, 0b01101100],
+///    crypto::xor_arrays(&vec![0b10101010, 0b11111111], &vec![0b01010101, 0b10010011])
+/// );
+/// ```
+pub fn xor_arrays(a1: &[u8], a2: &[u8]) -> Vec<u8> {
+    a1.iter().zip(a2.iter())
+        .map(|(&x, &y)| x ^ y)
+        .collect()
+}
+
 
 #[cfg(test)]
 mod test {
@@ -184,5 +203,27 @@ mod test {
     #[test]
     fn base64_hello_world() {
         assert_eq!(String::from("SGVsbG8sIHdvcmxkIQ=="), base64_encode_u8("Hello, world!".as_bytes()))
+    }
+
+    #[test]
+    fn xor_empty() {
+        assert_eq!(vec![] as Vec<u8>, xor_arrays(&vec![], &vec![]))
+    }
+
+    #[test]
+    fn xor_zero() {
+        assert_eq!(vec![0], xor_arrays(&vec![0], &vec![0]))
+    }
+
+    #[test]
+    fn xor_all_ones() {
+        assert_eq!(vec![0b00000000], xor_arrays(&vec![0b11111111], &vec![0b11111111]))
+    }
+
+    #[test]
+    fn xor_multiple() {
+        assert_eq!(
+            vec![0b00000000, 0b11001100],
+            xor_arrays(&vec![0b11111111, 0b11110000], &vec![0b11111111, 0b00111100]))
     }
 }
