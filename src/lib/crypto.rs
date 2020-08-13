@@ -39,13 +39,12 @@ pub fn hex2u8(input: &str) -> Result<Vec<u8>> {
     if input.len() == 0 || (input.len() & 0b1) == 1 {
         return Err(Box::new(InvalidHexString));
     }
-    let x = (0..input.len())
+    (0..input.len())
         .step_by(2)
         .map(|i|
             u8::from_str_radix(&input[i..i + 2], 16)
             .map_err(|e| e.into())) // Converts to Box
-        .collect();
-    x
+        .collect()
 }
 
 
