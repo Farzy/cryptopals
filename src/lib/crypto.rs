@@ -1,5 +1,7 @@
 //! String, cryptographic and mathematical functions
 
+use std::num::ParseIntError;
+
 const BASE64_ALPHABET : [char; 65] = [
     'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
     'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
@@ -14,14 +16,16 @@ const BASE64_ALPHABET : [char; 65] = [
 /// ```
 /// use cryptopals::crypto;
 ///
-/// assert_eq!(vec![65], crypto::hex2u8("41"));
-/// assert_eq!(vec![16, 32, 48], crypto::hex2u8("102030"));
+/// assert_eq!(Ok(vec![65]), crypto::hex2u8("41"));
+/// assert_eq!(Ok(vec![16, 32, 48]), crypto::hex2u8("102030"));
+/// assert!(crypto::hex2u8("1020ZZ").is_err());
 /// ```
-pub fn hex2u8(input: &str) -> Vec<u8> {
-    (0..input.len())
+pub fn hex2u8(input: &str) -> Result<Vec<u8>, ParseIntError> {
+    let x = (0..input.len())
         .step_by(2)
-        .map(|i| u8::from_str_radix(&input[i..i + 2], 16).unwrap())
-        .collect::<Vec<u8>>()
+        .map(|i| u8::from_str_radix(&input[i..i + 2], 16))
+        .collect();
+    x
 }
 
 
@@ -63,13 +67,23 @@ mod test {
 
     #[test]
     fn hex1() {
-        assert_eq!(vec![65], hex2u8("41"));
+        assert_eq!(Ok(vec![65]), hex2u8("41"));
+    }
+
+    #[test]
+    fn hex_invalid_char() {
+        assert!(hex2u8("4Z").is_err());
+    }
+
+    #[test]
+    fn hex_empty() {
+        assert_eq!(Ok(vec![]), hex2u8(""));
     }
 
     #[test]
     fn hex_long() {
         // The string represents "Hello, world!"
-        assert_eq!(vec![72, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100, 33],
+        assert_eq!(Ok(vec![72, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100, 33]),
                    hex2u8("48656c6c6f2c20776f726c6421"));
     }
 
