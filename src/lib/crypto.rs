@@ -31,11 +31,11 @@ impl error::Error for InvalidHexString {}
 /// ```
 /// use cryptopals::crypto;
 ///
-/// assert_eq!(vec![65], crypto::hex2u8("41").unwrap());
-/// assert_eq!(vec![16, 32, 48], crypto::hex2u8("102030").unwrap());
-/// assert!(crypto::hex2u8("1020ZZ").is_err());
+/// assert_eq!(vec![65], crypto::hex2bytes("41").unwrap());
+/// assert_eq!(vec![16, 32, 48], crypto::hex2bytes("102030").unwrap());
+/// assert!(crypto::hex2bytes("1020ZZ").is_err());
 /// ```
-pub fn hex2u8(input: &str) -> Result<Vec<u8>> {
+pub fn hex2bytes(input: &str) -> Result<Vec<u8>> {
     if input.len() == 0 || (input.len() & 0b1) == 1 {
         return Err(Box::new(InvalidHexString));
     }
@@ -45,6 +45,27 @@ pub fn hex2u8(input: &str) -> Result<Vec<u8>> {
             u8::from_str_radix(&input[i..i + 2], 16)
             .map_err(|e| e.into())) // Converts to Box
         .collect()
+}
+
+
+/// Convert an array of bytes to a hex string
+///
+/// # Examples
+///
+/// ```
+/// use cryptopals::crypto;
+///
+/// assert_eq!("41".to_owned(), crypto::bytes2hex(&[65]));
+/// assert_eq!(
+///    "48656c6c6f2c20776f726c6421".to_owned(),
+///    crypto::bytes2hex(&vec![72, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100, 33]));
+/// ```
+pub fn bytes2hex(input: &[u8]) -> String {
+    input
+        .iter()
+        .map(|&x| format!("{:x}", x))
+        .collect::<Vec<String>>()
+        .join("")
 }
 
 
@@ -86,30 +107,49 @@ mod test {
 
     #[test]
     fn hex1() {
-        assert_eq!(vec![65], hex2u8("41").unwrap());
+        assert_eq!(vec![65], hex2bytes("41").unwrap());
     }
 
     #[test]
     fn hex_invalid_char() {
-        assert!(hex2u8("4Z").is_err());
+        assert!(hex2bytes("4Z").is_err());
     }
 
     #[test]
     fn hex_empty() {
-        assert_eq!("invalid hexadecimal string", hex2u8("").unwrap_err().to_string());
+        assert_eq!("invalid hexadecimal string", hex2bytes("").unwrap_err().to_string());
     }
 
     #[test]
     fn hex_odd() {
-        assert_eq!("invalid hexadecimal string", hex2u8("123").unwrap_err().to_string());
+        assert_eq!("invalid hexadecimal string", hex2bytes("123").unwrap_err().to_string());
     }
 
     #[test]
     fn hex_long() {
         // The string represents "Hello, world!"
         assert_eq!(vec![72, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100, 33],
-                   hex2u8("48656c6c6f2c20776f726c6421").unwrap());
+                   hex2bytes("48656c6c6f2c20776f726c6421").unwrap());
     }
+
+    #[test]
+    fn bytes_empty() {
+        assert_eq!("".to_owned(), bytes2hex(&[]));
+    }
+
+    #[test]
+    fn bytes_short() {
+        assert_eq!("41".to_owned(), bytes2hex(&[65]));
+    }
+
+    #[test]
+    fn bytes_hello_world() {
+        assert_eq!(
+           "48656c6c6f2c20776f726c6421".to_owned(),
+           bytes2hex(&vec![72, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100, 33])
+        );
+    }
+
 
     #[test]
     fn base64_1_byte() {
