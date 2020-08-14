@@ -15,15 +15,22 @@
 extern crate reqwest;
 
 use cryptopals::helper;
+use std::error;
 
-const ALICE_WONDERLAND_URL : &str = "https://www.gutenberg.org/files/11/11-h/11-h.htm";
+const ALICE_WONDERLAND_URL : &str = "https://www.gutenberg.org/files/11/11-0.txt";
 
-pub fn main() -> Result<(), reqwest::Error> {
+const GUTENBERG_START_MARKER: &'static str = "*** START OF THIS PROJECT GUTENBERG EBOOK";
+const GUTENBERG_END_MARKER: &'static str = "*** END OF THIS PROJECT GUTENBERG EBOOK";
+
+pub fn main() -> Result<(), Box<dyn error::Error>> {
     helper::section("Set 1 / Challenge 3");
 
     let body = reqwest::blocking::get(ALICE_WONDERLAND_URL)?
         .text()?;
 
-    println!("{}", body);
+    let start_marker = body.find(GUTENBERG_START_MARKER).ok_or("Gutenberg start marker not found")?;
+    let end_marker = body.find(GUTENBERG_END_MARKER).ok_or("Gutenberg end marker not found")?;
+
+    println!("Body len: {}, start: {}, end: {}", body.len(), start_marker, end_marker);
     Ok(())
 }
