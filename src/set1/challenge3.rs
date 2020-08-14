@@ -12,14 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Set 1
+extern crate reqwest;
 
-mod challenge1;
-mod challenge2;
-mod challenge3;
+use cryptopals::helper;
 
-pub fn main() {
-    challenge1::main();
-    challenge2::main();
-    challenge3::main().expect("Challenge 3 failed (network / http issue?)");
+const ALICE_WONDERLAND_URL : &str = "https://www.gutenberg.org/files/11/11-h/11-h.htm";
+
+pub fn main() -> Result<(), reqwest::Error> {
+    helper::section("Set 1 / Challenge 3");
+
+    let body = reqwest::blocking::get(ALICE_WONDERLAND_URL)?
+        .text()?;
+
+    println!("{}", body);
+    Ok(())
 }

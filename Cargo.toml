@@ -11,3 +11,6 @@ path = "src/lib/mod.rs"
 doctest = true
 
 [dependencies]
+reqwest = { version = "0.10.7", features = ["blocking"] }
+# TODO Remove once 0.3.13 is fixed or "hyper" updated
+socket2 = "=0.3.12"
