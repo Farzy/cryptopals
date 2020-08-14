@@ -1,6 +1,7 @@
 //! String, cryptographic and mathematical functions
 
 use std::{error, fmt};
+use std::fmt::Write;
 
 const BASE64_ALPHABET : [char; 65] = [
     'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
@@ -35,14 +36,14 @@ impl error::Error for InvalidHexString {}
 /// assert_eq!(vec![16, 32, 48], crypto::hex2bytes("102030").unwrap());
 /// assert!(crypto::hex2bytes("1020ZZ").is_err());
 /// ```
-pub fn hex2bytes(input: &str) -> Result<Vec<u8>> {
-    if input.len() == 0 || (input.len() & 0b1) == 1 {
+pub fn hex2bytes(string: &str) -> Result<Vec<u8>> {
+    if string.len() == 0 || (string.len() & 0b1) == 1 {
         return Err(Box::new(InvalidHexString));
     }
-    (0..input.len())
+    (0..string.len())
         .step_by(2)
         .map(|i|
-            u8::from_str_radix(&input[i..i + 2], 16)
+            u8::from_str_radix(&string[i..i + 2], 16)
             .map_err(|e| e.into())) // Converts to Box
         .collect()
 }
@@ -60,12 +61,12 @@ pub fn hex2bytes(input: &str) -> Result<Vec<u8>> {
 ///    "48656c6c6f2c20776f726c6421".to_owned(),
 ///    crypto::bytes2hex(&vec![72, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100, 33]));
 /// ```
-pub fn bytes2hex(input: &[u8]) -> String {
-    input
-        .iter()
-        .map(|&x| format!("{:x}", x))
-        .collect::<Vec<String>>()
-        .join("")
+pub fn bytes2hex(bytes: &[u8]) -> String {
+    let mut s = String::with_capacity(bytes.len() * 2);
+    for &b in bytes {
+        write!(&mut s, "{:02x}", b).unwrap();
+    }
+    s
 }
 
 
@@ -113,8 +114,8 @@ pub fn base64_encode_u8(bytes: &[u8]) -> String {
 ///    crypto::xor_arrays(&vec![0b10101010, 0b11111111], &vec![0b01010101, 0b10010011])
 /// );
 /// ```
-pub fn xor_arrays(a1: &[u8], a2: &[u8]) -> Vec<u8> {
-    a1.iter().zip(a2.iter())
+pub fn xor_arrays(bytes1: &[u8], bytes2: &[u8]) -> Vec<u8> {
+    bytes1.iter().zip(bytes2.iter())
         .map(|(&x, &y)| x ^ y)
         .collect()
 }
