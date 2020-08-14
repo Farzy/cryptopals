@@ -16,8 +16,10 @@ extern crate reqwest;
 
 use cryptopals::helper;
 use std::error;
+use std::collections::HashMap;
 
-const ALICE_WONDERLAND_URL: &str = "https://www.gutenberg.org/files/11/11-0.txt";
+// Alice in Wonderland
+const GUTENBERG_CORPUS_URL: &str = "https://www.gutenberg.org/files/11/11-0.txt";
 
 const GUTENBERG_START_MARKER: &'static str = "*** START OF THIS PROJECT GUTENBERG EBOOK";
 const GUTENBERG_END_MARKER: &'static str = "*** END OF THIS PROJECT GUTENBERG EBOOK";
@@ -32,10 +34,20 @@ pub fn main() {
             return
         }
     };
+
+    let mut char_count: HashMap<char, u32> = HashMap::new();
+    for c in corpus.chars() {
+        // WARNING We ignore non-ASCII letters
+        if c.is_ascii_alphabetic() {
+            let count = char_count.entry(c.to_ascii_lowercase()).or_insert(0);
+            *count += 1;
+        }
+    }
+    println!("Character occurrence: {:?}", char_count);
 }
 
 fn get_corpus() -> Result<String, Box<dyn error::Error>> {
-    let body = reqwest::blocking::get(ALICE_WONDERLAND_URL)?
+    let body = reqwest::blocking::get(GUTENBERG_CORPUS_URL)?
         .text()?;
 
     let start_marker =
