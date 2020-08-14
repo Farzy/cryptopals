@@ -2,6 +2,7 @@
 
 use std::{error, fmt};
 use std::fmt::Write;
+use std::char;
 
 const BASE64_ALPHABET : [char; 65] = [
     'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
@@ -36,16 +37,40 @@ impl error::Error for InvalidHexString {}
 /// assert_eq!(vec![16, 32, 48], crypto::hex2bytes("102030").unwrap());
 /// assert!(crypto::hex2bytes("1020ZZ").is_err());
 /// ```
-pub fn hex2bytes(string: &str) -> Result<Vec<u8>> {
-    if string.len() == 0 || (string.len() & 0b1) == 1 {
+pub fn hex2bytes(hex: &str) -> Result<Vec<u8>> {
+    if hex.len() == 0 || (hex.len() & 0b1) == 1 {
         return Err(Box::new(InvalidHexString));
     }
-    (0..string.len())
+    (0..hex.len())
         .step_by(2)
         .map(|i|
-            u8::from_str_radix(&string[i..i + 2], 16)
+            u8::from_str_radix(&hex[i..i + 2], 16)
             .map_err(|e| e.into())) // Converts to Box
         .collect()
+}
+
+
+/// Convert a hex string to a string
+///
+/// # Examples
+///
+/// ```
+/// use cryptopals::crypto;
+///
+/// assert_eq!("A".to_owned(), crypto::hex2string("41").unwrap());
+/// assert_eq!("the kid don't play", crypto::hex2string("746865206b696420646f6e277420706c6179").unwrap());
+/// assert!(crypto::hex2string("1020ZZ").is_err());
+/// ```
+pub fn hex2string(hex: &str) -> Result<String> {
+    if hex.len() == 0 || (hex.len() & 0b1) == 1 {
+        return Err(Box::new(InvalidHexString));
+    }
+    let mut s = String::with_capacity(hex.len() / 2);
+    for i in (0..hex.len()).step_by(2) {
+        let c = u8::from_str_radix(&hex[i..i + 2], 16)? as char;
+        s.push(c);
+    }
+    Ok(s)
 }
 
 

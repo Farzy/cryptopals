@@ -1,4 +1,5 @@
 use cryptopals::{helper, crypto};
+use cryptopals::crypto::hex2string;
 
 // Set 1 / Challenge 2
 pub fn main() {
@@ -16,5 +17,6 @@ pub fn main() {
     );
 
     println!("{} ^ {} = {}", input1, input2, output);
+    println!("output = {}", hex2string(&output).unwrap());
     assert_eq!(expected_output, output);
 }
