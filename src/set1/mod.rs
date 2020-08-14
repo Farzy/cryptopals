@@ -21,5 +21,5 @@ mod challenge3;
 pub fn main() {
     challenge1::main();
     challenge2::main();
-    challenge3::main().expect("Challenge 3 failed (network / http issue?)");
+    challenge3::main();
 }

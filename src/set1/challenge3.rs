@@ -17,20 +17,38 @@ extern crate reqwest;
 use cryptopals::helper;
 use std::error;
 
-const ALICE_WONDERLAND_URL : &str = "https://www.gutenberg.org/files/11/11-0.txt";
+const ALICE_WONDERLAND_URL: &str = "https://www.gutenberg.org/files/11/11-0.txt";
 
 const GUTENBERG_START_MARKER: &'static str = "*** START OF THIS PROJECT GUTENBERG EBOOK";
 const GUTENBERG_END_MARKER: &'static str = "*** END OF THIS PROJECT GUTENBERG EBOOK";
 
-pub fn main() -> Result<(), Box<dyn error::Error>> {
+pub fn main() {
     helper::section("Set 1 / Challenge 3");
 
+    let corpus = match get_corpus() {
+        Ok(corpus) => corpus,
+        Err(error) => {
+            eprintln!("An error happened: {}", error);
+            return
+        }
+    };
+}
+
+fn get_corpus() -> Result<String, Box<dyn error::Error>> {
     let body = reqwest::blocking::get(ALICE_WONDERLAND_URL)?
         .text()?;
 
-    let start_marker = body.find(GUTENBERG_START_MARKER).ok_or("Gutenberg start marker not found")?;
-    let end_marker = body.find(GUTENBERG_END_MARKER).ok_or("Gutenberg end marker not found")?;
+    let start_marker =
+        body.find(GUTENBERG_START_MARKER).ok_or("Gutenberg start marker not found")?;
+    let start_text =
+        start_marker
+            + body[start_marker..].find("\r\n").ok_or("Missing end of line")?
+            + 2;
+    let end_text =
+        body.find(GUTENBERG_END_MARKER).ok_or("Gutenberg end marker not found")?
+            - 1;
 
-    println!("Body len: {}, start: {}, end: {}", body.len(), start_marker, end_marker);
-    Ok(())
+    println!("Body len: {}", body.len());
+    println!("Start text: {}, end text: {}", start_text, end_text);
+    Ok(body[start_text..=end_text].to_owned())
 }
