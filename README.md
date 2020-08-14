@@ -2,6 +2,23 @@
 
 Try to solve https://cryptopals.com/ challenges and learn some cryptography on my own.
 
+# Building
+
+```
+cargo build
+```
+
+# Running
+
+```
+cargo run
+```
+
+# Debugging
+
+Prefix the binary with `RUST_LOG=cryptopals=debug` in order to
+display debug messages.
+
 # Licence
 
 Copyright 2020 Farzad FARID <farzy@farzy.org>
