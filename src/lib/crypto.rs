@@ -163,6 +163,11 @@ mod test {
     }
 
     #[test]
+    fn bytes_small() {
+        assert_eq!("09".to_owned(), bytes2hex(&[9]));
+    }
+
+    #[test]
     fn bytes_hello_world() {
         assert_eq!(
            "48656c6c6f2c20776f726c6421".to_owned(),
