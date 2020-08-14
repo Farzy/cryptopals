@@ -16,7 +16,6 @@ extern crate reqwest;
 
 use cryptopals::{helper, crypto};
 use std::error;
-use std::collections::HashMap;
 
 // Alice in Wonderland
 const GUTENBERG_CORPUS_URL: &str = "https://www.gutenberg.org/files/11/11-0.txt";
@@ -38,9 +37,9 @@ pub fn main() {
     };
 
     let corpus_freq = calc_frequencies(&corpus);
-    debug!("ETAOIN code: {}", etaoin_code(&corpus_freq));
 
     let mut best_euclidean_score = f64::INFINITY;
+    let mut best_pearson_score = f64::NEG_INFINITY;
     let mut best_xor = 0;
     let mut best_string = String::new();
 
@@ -49,80 +48,63 @@ pub fn main() {
     // Test all values from 0 to 255 as XOR, reject invalid strings and compute
     // letter frequencies and Euclidean distance to our English corpus.
     // Keep the winner.
-    let corpus_freq_u8 : Vec<_> = corpus_freq.iter().map(|x| x.1).collect();
     for xor in 0u8..=255 {
         let xored_input: Vec<_> = input_bytes.iter()
             .map(|byte| *byte ^ xor)
             .collect();
         if let Ok(xored_string) = String::from_utf8(xored_input) {
             let xored_freq = calc_frequencies(&xored_string);
-            let xored_freq_u8 : Vec<_> = xored_freq.iter().map(|x| x.1).collect();
 
             let euclidean_score = euclidean_distance(&corpus_freq, &xored_freq);
 
-            let cov = covariance(&corpus_freq_u8, &xored_freq_u8);
+            let pearson_score = covariance(&corpus_freq, &xored_freq)
+                / std_dev(&corpus_freq)
+                / std_dev(&xored_freq);
 
-            let pearson = cov / std_dev(&corpus_freq_u8) / std_dev(&xored_freq_u8);
+            debug!("input xor {} = '{}'", xor, xored_string);
+            debug!(" - Euclidean score: {}", euclidean_score);
+            debug!(" - Pearson: {}", pearson_score);
 
-            if pearson > 0.0 {
-                debug!("input xor {} = '{}'", xor, xored_string);
-                debug!(" - Euclidean score: {}", euclidean_score);
-                debug!(" - Covariance: {}", cov);
-                debug!(" - Pearson: {}", pearson);
-                debug!(" - ETAOIN code: {}", etaoin_code(&xored_freq));
-
-                if euclidean_score < best_euclidean_score {
-                    best_euclidean_score = euclidean_score;
-                    best_xor = xor;
-                    best_string = xored_string;
-                    debug!(" - Best score!");
-                }
+            if euclidean_score < best_euclidean_score {
+                best_euclidean_score = euclidean_score;
+                best_xor = xor;
+                best_string = xored_string;
+                debug!(" - Best Euclidean score!");
+            }
+            if pearson_score > best_pearson_score {
+                best_pearson_score = pearson_score;
+                debug!(" - Best Pearson score!");
             }
         } else {
             debug!("input xor {} is an invalid string!", xor);
         }
     }
 
-    println!("XOR = {}, string = '{}'", best_xor, best_string);
+    println!("XOR character = '{}', string = '{}'", best_xor as char, best_string);
 }
 
 
-/// Compute the 12 most used letters in a frequency vector
-fn etaoin_code(text_freq: &Vec<(char, f64)>) -> String {
-    let mut f = text_freq.clone();
-    f.sort_by(|(_, percentage1), (_, percentage2)| percentage2.partial_cmp(percentage1).unwrap());
-    let mut freq_code = String::new();
-    for i in 0..12 {
-        freq_code.push(f[i].0);
-    }
-    freq_code
-}
-
-
-/// Compute the letter frequency in a text
+/// Compute the characters frequency in a text
 ///
 /// The code only takes the 26 ASCII letters into consideration and ignore any other character.
-fn calc_frequencies(text: &str) -> Vec<(char, f64)> {
-    let mut char_count: HashMap<char, u32> = HashMap::new();
+fn calc_frequencies(text: &str) -> Vec<f64> {
+    // Store characters and their frequency in order, defaulting to 0
+    let mut frequencies: Vec<f64> = Vec::new();
+    frequencies.resize(256, 0.0);
+
     let mut total = 0u32;
+
     for c in text.chars() {
-        // WARNING We ignore non-ASCII letters
-        if c.is_ascii_alphabetic() {
-            let count = char_count.entry(c.to_ascii_uppercase()).or_insert(0);
-            *count += 1;
+        // WARNING We ignore non-ASCII characters
+        if c.is_ascii() {
+            frequencies[c.to_ascii_uppercase() as usize] += 1.0;
             total += 1;
         }
     }
-    debug!("Character occurrence: {:?}", char_count);
 
-    // Store letters and their frequency in order, adding 0 for missing letters
-    let mut frequencies: Vec<(char, f64)> = Vec::with_capacity(26);
-    for i in 0..=25 {
-        let letter = (('A' as u8) + i) as char;
-        if total != 0 {
-            frequencies.push((letter, *char_count.get(&letter).unwrap_or(&0) as f64 / total as f64));
-        } else {
-            frequencies.push((letter, 0.0));
+    if total != 0 {
+        for i in 0..=255 {
+            frequencies[i] /= total as f64;
         }
     }
 
@@ -136,9 +118,9 @@ fn calc_frequencies(text: &str) -> Vec<(char, f64)> {
 /// # References
 ///
 /// https://www.geeksforgeeks.org/pandas-compute-the-euclidean-distance-between-two-series/
-fn euclidean_distance(freq1: &[(char, f64)], freq2: &[(char, f64)]) -> f64 {
+fn euclidean_distance(freq1: &[f64], freq2: &[f64]) -> f64 {
     freq1.iter().zip(freq2.iter())
-        .map(|(f1, f2)| (f1.1 - f2.1).powi(2))
+        .map(|(&f1, &f2)| (f1 - f2).powi(2))
         .sum::<f64>()
         .sqrt()
 }
