@@ -14,7 +14,8 @@
 
 extern crate reqwest;
 
-use cryptopals::{helper, crypto};
+use cryptopals::helper;
+use cryptopals::crypto::HexString;
 use std::error;
 
 // Alice in Wonderland
@@ -41,7 +42,7 @@ pub fn main() {
     let mut best_xor = 0;
     let mut best_string = String::new();
 
-    let input_bytes = crypto::hex2bytes(input).unwrap();
+    let input_bytes = input.hex2bytes().unwrap();
 
     // Test all values from 0 to 255 as XOR, reject invalid strings and compute
     // letter frequencies and Euclidean distance to our English corpus.

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use cryptopals::{helper, crypto};
-use cryptopals::crypto::hex2string;
+use cryptopals::helper;
+use cryptopals::crypto::{HexString, BytesCrypto};
 
 // Set 1 / Challenge 2
 pub fn main() {
@@ -23,14 +23,11 @@ pub fn main() {
     let input2 = "686974207468652062756c6c277320657965";
     let expected_output = "746865206b696420646f6e277420706c6179";
 
-    let output = crypto::bytes2hex(
-        &crypto::xor_arrays(
-            &crypto::hex2bytes(input1).unwrap(),
-            &crypto::hex2bytes(input2).unwrap()
-        )
-    );
+    let output = input1.hex2bytes().unwrap().xor(
+        &input2.hex2bytes().unwrap(),
+    ).bytes2hex();
 
     println!("{} ^ {} = {}", input1, input2, output);
-    println!("String translation = {}", hex2string(&output).unwrap());
+    println!("String translation = {}", (&output[..]).hex2string().unwrap());
     assert_eq!(expected_output, output);
 }

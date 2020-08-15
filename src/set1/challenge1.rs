@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use cryptopals::{helper, crypto};
+use cryptopals::helper;
+use cryptopals::crypto::{HexString, BytesCrypto};
 
 // Set 1 / Challenge 1
 pub fn main() {
@@ -21,12 +22,12 @@ pub fn main() {
     let input = "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d";
     let output = "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t";
 
-    match crypto::hex2bytes(input) {
+    match input.hex2bytes() {
         Ok(bytes) => {
-            let x = crypto::base64_encode_u8(&bytes);
+            let x = bytes.base64_encode();
 
             println!("Base64({}) = {}", input, x);
-            println!("String translation: {}", crypto::hex2string(input).unwrap());
+            println!("String translation: {}", input.hex2string().unwrap());
             assert_eq!(output, x);
         },
         Err(e) => {

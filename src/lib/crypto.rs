@@ -40,124 +40,140 @@ impl fmt::Display for InvalidHexString {
 
 impl error::Error for InvalidHexString {}
 
-/// Convert a hex string to an array of bytes
-///
-/// # Examples
-///
-/// ```
-/// use cryptopals::crypto;
-///
-/// assert_eq!(vec![65], crypto::hex2bytes("41").unwrap());
-/// assert_eq!(vec![16, 32, 48], crypto::hex2bytes("102030").unwrap());
-/// assert!(crypto::hex2bytes("1020ZZ").is_err());
-/// ```
-pub fn hex2bytes(hex: &str) -> Result<Vec<u8>> {
-    if hex.len() == 0 || (hex.len() & 0b1) == 1 {
-        return Err(Box::new(InvalidHexString));
-    }
-    (0..hex.len())
-        .step_by(2)
-        .map(|i|
-            u8::from_str_radix(&hex[i..i + 2], 16)
-            .map_err(|e| e.into())) // Converts to Box
-        .collect()
+pub trait HexString {
+    fn hex2bytes(&self) -> Result<Vec<u8>>;
+    fn hex2string(&self) -> Result<String>;
 }
 
+impl HexString for &str {
+    /// Convert a hex string to an array of bytes
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use cryptopals::crypto::HexString;
+    ///
+    /// assert_eq!(vec![65], "41".hex2bytes().unwrap());
+    /// assert_eq!(vec![16, 32, 48], "102030".hex2bytes().unwrap());
+    /// assert!("1020ZZ".hex2bytes().is_err());
+    /// ```
+    fn hex2bytes(&self) -> Result<Vec<u8>> {
+        let l = self.len();
+        if l == 0 || (l & 0b1) == 1 {
+            return Err(Box::new(InvalidHexString));
+        }
+        (0..l)
+            .step_by(2)
+            .map(|i|
+                u8::from_str_radix(&self[i..i + 2], 16)
+                    .map_err(|e| e.into())) // Converts to Box
+            .collect()
+    }
 
-/// Convert a hex string to a string
-///
-/// # Examples
-///
-/// ```
-/// use cryptopals::crypto;
-///
-/// assert_eq!("A".to_owned(), crypto::hex2string("41").unwrap());
-/// assert_eq!("the kid don't play", crypto::hex2string("746865206b696420646f6e277420706c6179").unwrap());
-/// assert!(crypto::hex2string("1020ZZ").is_err());
-/// ```
-pub fn hex2string(hex: &str) -> Result<String> {
-    if hex.len() == 0 || (hex.len() & 0b1) == 1 {
-        return Err(Box::new(InvalidHexString));
+    /// Convert a hex string to a string
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use cryptopals::crypto::HexString;
+    ///
+    /// assert_eq!("A".to_owned(), "41".hex2string().unwrap());
+    /// assert_eq!("the kid don't play", "746865206b696420646f6e277420706c6179".hex2string().unwrap());
+    /// assert!("1020ZZ".hex2string().is_err());
+    /// ```
+    fn hex2string(&self) -> Result<String> {
+        let l = self.len();
+        if l == 0 || (l & 0b1) == 1 {
+            return Err(Box::new(InvalidHexString));
+        }
+        let mut s = String::with_capacity(l / 2);
+        for i in (0..l).step_by(2) {
+            let c = u8::from_str_radix(&self[i..i + 2], 16)? as char;
+            s.push(c);
+        }
+        Ok(s)
     }
-    let mut s = String::with_capacity(hex.len() / 2);
-    for i in (0..hex.len()).step_by(2) {
-        let c = u8::from_str_radix(&hex[i..i + 2], 16)? as char;
-        s.push(c);
-    }
-    Ok(s)
 }
 
+pub trait BytesCrypto {
+    fn bytes2hex(&self) -> String;
+    fn base64_encode(&self) -> String;
+    fn xor(&self, other: &[u8]) -> Vec<u8>;
+}
 
+impl BytesCrypto for [u8] {
 /// Convert an array of bytes to a hex string
-///
-/// # Examples
-///
-/// ```
-/// use cryptopals::crypto;
-///
-/// assert_eq!("41".to_owned(), crypto::bytes2hex(&[65]));
-/// assert_eq!(
-///    "48656c6c6f2c20776f726c6421".to_owned(),
-///    crypto::bytes2hex(&vec![72, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100, 33]));
-/// ```
-pub fn bytes2hex(bytes: &[u8]) -> String {
-    let mut s = String::with_capacity(bytes.len() * 2);
-    for &b in bytes {
-        write!(&mut s, "{:02x}", b).unwrap();
+ ///
+ /// # Examples
+ ///
+ /// ```
+ /// use cryptopals::crypto::BytesCrypto;
+ ///
+ /// assert_eq!("41".to_owned(), vec![65].bytes2hex());
+ /// assert_eq!(
+ ///    "48656c6c6f2c20776f726c6421".to_owned(),
+ ///    vec![72, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100, 33].bytes2hex());
+ /// ```
+    fn bytes2hex(&self) -> String {
+        let mut s = String::with_capacity(self.len() * 2);
+        for b in self {
+            write!(&mut s, "{:02x}", b).unwrap();
+        }
+        s
     }
-    s
+
+    /// Convert an array of bytes to Base64
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use cryptopals::crypto::BytesCrypto;
+    ///
+    /// assert_eq!(String::from("QUJD"), [65, 66, 67].base64_encode());
+    /// assert_eq!(String::from("QUJD"), vec![65, 66, 67].base64_encode());
+    /// assert_eq!(String::from("SGVsbG8sIHdvcmxkIQ=="), "Hello, world!".as_bytes().base64_encode());
+    /// ```
+    ///
+    /// # References
+    ///
+    /// This code is inspired by this article: https://levelup.gitconnected.com/implementing-base64-in-rust-34ef6db1e73a
+    fn base64_encode(&self) -> String {
+        self
+            .chunks(3)
+            .map(|chunk| {
+                match chunk.len() {
+                    1 => [chunk[0] >> 2, (chunk[0] & 0b00000011) << 4, 64, 64],
+                    2 => [chunk[0] >> 2, (chunk[0] & 0b00000011) << 4 | (chunk[1] & 0b11110000) >> 4, (chunk[1] & 0b00001111) << 2, 64],
+                    _ => [chunk[0] >> 2, (chunk[0] & 0b00000011) << 4 | (chunk[1] & 0b11110000) >> 4, (chunk[1] & 0b00001111) << 2 | (chunk[2] & 0b11000000) >> 6, chunk[2] & 0b00111111],
+                }.iter()
+                    .map(|x| BASE64_ALPHABET[*x as usize])
+                    .collect::<String>()
+            })
+            .collect::<Vec<String>>()
+            .join("")
+            .into()
+    }
+
+    /// XOR two equal length arrays of bytes
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use cryptopals::crypto::BytesCrypto;
+    ///
+    /// assert_eq!(vec![0], vec![0].xor(&vec![0]));
+    /// assert_eq!(
+    ///    vec![0b11111111, 0b01101100],
+    ///    vec![0b10101010, 0b11111111].xor(&vec![0b01010101, 0b10010011])
+    /// );
+    /// ```
+    fn xor(&self, other: &[u8]) -> Vec<u8> {
+        self.iter().zip(other.iter())
+            .map(|(&x, &y)| x ^ y)
+            .collect()
+    }
 }
 
-
-/// Convert an array of bytes to Base64
-///
-/// # Examples
-///
-/// ```
-/// use cryptopals::crypto;
-///
-/// assert_eq!(String::from("QUJD"), crypto::base64_encode_u8(&[65, 66, 67]));
-/// assert_eq!(String::from("SGVsbG8sIHdvcmxkIQ=="), crypto::base64_encode_u8("Hello, world!".as_bytes()));
-/// ```
-///
-/// # References
-///
-/// This code is inspired by this article: https://levelup.gitconnected.com/implementing-base64-in-rust-34ef6db1e73a
-pub fn base64_encode_u8(bytes: &[u8]) -> String {
-    bytes
-        .chunks(3)
-        .map(|chunk| {
-            match chunk.len() {
-                1 => [chunk[0] >> 2, (chunk[0] & 0b00000011) << 4, 64, 64],
-                2 => [chunk[0] >> 2, (chunk[0] & 0b00000011) << 4 | (chunk[1] & 0b11110000) >> 4, (chunk[1] & 0b00001111) << 2, 64],
-                _ => [chunk[0] >> 2, (chunk[0] & 0b00000011) << 4 | (chunk[1] & 0b11110000) >> 4, (chunk[1] & 0b00001111) << 2 | (chunk[2] & 0b11000000) >> 6, chunk[2] & 0b00111111],
-            }.iter()
-                .map(|x| BASE64_ALPHABET[*x as usize])
-                .collect::<String>()
-        })
-        .collect::<Vec<String>>()
-        .join("")
-        .into()
-}
-
-/// XOR two equal length arrays of bytes
-///
-/// # Examples
-///
-/// ```
-/// use cryptopals::crypto;
-///
-/// assert_eq!(vec![0], crypto::xor_arrays(&vec![0], &vec![0]));
-/// assert_eq!(
-///    vec![0b11111111, 0b01101100],
-///    crypto::xor_arrays(&vec![0b10101010, 0b11111111], &vec![0b01010101, 0b10010011])
-/// );
-/// ```
-pub fn xor_arrays(bytes1: &[u8], bytes2: &[u8]) -> Vec<u8> {
-    bytes1.iter().zip(bytes2.iter())
-        .map(|(&x, &y)| x ^ y)
-        .collect()
-}
 
 
 #[cfg(test)]
@@ -166,109 +182,125 @@ mod test {
 
     #[test]
     fn hex1() {
-        assert_eq!(vec![65], hex2bytes("41").unwrap());
+        assert_eq!(vec![65], "41".hex2bytes().unwrap());
     }
 
     #[test]
     fn hex_invalid_char() {
-        assert!(hex2bytes("4Z").is_err());
+        assert!("4Z".hex2bytes().is_err());
     }
 
     #[test]
     fn hex_empty() {
-        assert_eq!("invalid hexadecimal string", hex2bytes("").unwrap_err().to_string());
+        assert_eq!("invalid hexadecimal string", "".hex2bytes().unwrap_err().to_string());
     }
 
     #[test]
     fn hex_odd() {
-        assert_eq!("invalid hexadecimal string", hex2bytes("123").unwrap_err().to_string());
+        assert_eq!("invalid hexadecimal string", "123".hex2bytes().unwrap_err().to_string());
     }
 
     #[test]
     fn hex_long() {
         // The string represents "Hello, world!"
         assert_eq!(vec![72, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100, 33],
-                   hex2bytes("48656c6c6f2c20776f726c6421").unwrap());
+                   "48656c6c6f2c20776f726c6421".hex2bytes().unwrap());
+    }
+
+    #[test]
+    fn hex2str_short() {
+        assert_eq!("A".to_owned(), "41".hex2string().unwrap());
+    }
+
+    #[test]
+    fn hex2str_long() {
+        assert_eq!("the kid don't play".to_owned(), "746865206b696420646f6e277420706c6179".hex2string().unwrap());
+    }
+
+    #[test]
+    fn hex2str_err() {
+        assert!("1020ZZ".hex2string().is_err());
     }
 
     #[test]
     fn bytes_empty() {
-        assert_eq!("".to_owned(), bytes2hex(&[]));
+        assert_eq!("".to_owned(), [].bytes2hex());
+        assert_eq!("".to_owned(), vec![].bytes2hex());
     }
 
     #[test]
     fn bytes_short() {
-        assert_eq!("41".to_owned(), bytes2hex(&[65]));
+        assert_eq!("41".to_owned(), [65].bytes2hex());
     }
 
     #[test]
     fn bytes_small() {
-        assert_eq!("09".to_owned(), bytes2hex(&[9]));
+        assert_eq!("09".to_owned(), vec![9].bytes2hex());
     }
 
     #[test]
     fn bytes_hello_world() {
         assert_eq!(
            "48656c6c6f2c20776f726c6421".to_owned(),
-           bytes2hex(&vec![72, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100, 33])
+           vec![72, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100, 33].bytes2hex()
         );
     }
 
 
     #[test]
     fn base64_1_byte() {
-        assert_eq!(String::from("QQ=="), base64_encode_u8(&[65]))
+        assert_eq!(String::from("QQ=="), [65].base64_encode())
     }
 
     #[test]
     fn base64_2_byte() {
-        assert_eq!(String::from("QUI="), base64_encode_u8(&[65, 66]))
+        assert_eq!(String::from("QUI="), [65, 66].base64_encode())
     }
 
     #[test]
     fn base64_3_bytes() {
-        assert_eq!(String::from("QUJD"), base64_encode_u8(&[65, 66, 67]))
+        assert_eq!(String::from("QUJD"), [65, 66, 67].base64_encode())
     }
 
     #[test]
     fn base64_4_bytes() {
-        assert_eq!(String::from("QUJDRA=="), base64_encode_u8(&[65, 66, 67, 68]))
+        assert_eq!(String::from("QUJDRA=="), [65, 66, 67, 68].base64_encode())
     }
 
     #[test]
     fn base64_5_bytes() {
-        assert_eq!(String::from("QUJDREU="), base64_encode_u8(&[65, 66, 67, 68, 69]))
+        assert_eq!(String::from("QUJDREU="), [65, 66, 67, 68, 69].base64_encode())
     }
 
     #[test]
     fn base64_6_bytes() {
-        assert_eq!(String::from("QUJDREVG"), base64_encode_u8(&[65, 66, 67, 68, 69, 70]))
+        assert_eq!(String::from("QUJDREVG"), [65, 66, 67, 68, 69, 70].base64_encode())
     }
 
     #[test]
     fn base64_hello_world() {
-        assert_eq!(String::from("SGVsbG8sIHdvcmxkIQ=="), base64_encode_u8("Hello, world!".as_bytes()))
+        assert_eq!(String::from("SGVsbG8sIHdvcmxkIQ=="), "Hello, world!".as_bytes().base64_encode())
     }
 
     #[test]
     fn xor_empty() {
-        assert_eq!(vec![] as Vec<u8>, xor_arrays(&vec![], &vec![]))
+        assert_eq!(vec![] as Vec<u8>, vec![].xor(&vec![]))
     }
 
     #[test]
     fn xor_zero() {
-        assert_eq!(vec![0], xor_arrays(&vec![0], &vec![0]))
+        assert_eq!(vec![0], vec![0].xor(&vec![0]))
     }
 
     #[test]
     fn xor_all_ones() {
-        assert_eq!(vec![0b00000000], xor_arrays(&vec![0b11111111], &vec![0b11111111]))
+        assert_eq!(vec![0b00000000], vec![0b11111111].xor(&vec![0b11111111]))
     }
 
     #[test]
     fn xor_multiple() {
         assert_eq!(
             vec![0b00000000, 0b11001100],
-            xor_arrays(&vec![0b11111111, 0b11110000], &vec![0b11111111, 0b00111100]))
+            vec![0b11111111, 0b11110000].xor(&vec![0b11111111, 0b00111100]))
     }
 }
