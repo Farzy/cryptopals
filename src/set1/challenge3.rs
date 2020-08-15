@@ -84,11 +84,11 @@ pub fn main() {
 
 /// Compute the characters frequency in a text
 ///
-/// The code only takes the 26 ASCII letters into consideration and ignore any other character.
+/// The code only takes ASCII characters into consideration and ignore any other character.
 fn calc_frequencies(text: &str) -> Vec<f64> {
     // Store characters and their frequency in order, defaulting to 0
     let mut frequencies: Vec<f64> = Vec::new();
-    frequencies.resize(256, 0.0);
+    frequencies.resize(128, 0.0);
 
     let mut total = 0u32;
 
@@ -101,7 +101,7 @@ fn calc_frequencies(text: &str) -> Vec<f64> {
     }
 
     if total != 0 {
-        for i in 0..=255 {
+        for i in 0..=127 {
             frequencies[i] /= total as f64;
         }
     }
