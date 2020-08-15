@@ -33,8 +33,8 @@ pub fn calc_frequencies(text: &str) -> Vec<f64> {
     }
 
     if total != 0 {
-        for i in 0..=127 {
-            frequencies[i] /= total as f64;
+        for item in frequencies.iter_mut() {
+            *item /= total as f64;
         }
     }
 
@@ -61,8 +61,8 @@ pub fn euclidean_distance(freq1: &[f64], freq2: &[f64]) -> f64 {
 /// The code supposes that the text is formatted in Project Gutenberg's
 /// style.
 pub fn get_gutenberg_corpus(url: &str) -> Result<String, Box<dyn error::Error>> {
-    const GUTENBERG_START_MARKER: &'static str = "*** START OF THIS PROJECT GUTENBERG EBOOK";
-    const GUTENBERG_END_MARKER: &'static str = "*** END OF THIS PROJECT GUTENBERG EBOOK";
+    const GUTENBERG_START_MARKER: &str = "*** START OF THIS PROJECT GUTENBERG EBOOK";
+    const GUTENBERG_END_MARKER: &str = "*** END OF THIS PROJECT GUTENBERG EBOOK";
 
     debug!("Using {} as English corpus", url);
     let body = reqwest::blocking::get(url)?

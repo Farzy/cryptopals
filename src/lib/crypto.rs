@@ -151,7 +151,6 @@ impl BytesCrypto for [u8] {
             })
             .collect::<Vec<String>>()
             .join("")
-            .into()
     }
 
     /// XOR two equal length arrays of bytes
