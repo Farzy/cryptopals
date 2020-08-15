@@ -12,7 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::error;
+use std::{error, fs};
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
+use std::io::Write;
 
 /// Compute the characters frequency in a text
 ///
@@ -65,8 +68,24 @@ pub fn get_gutenberg_corpus(url: &str) -> Result<String, Box<dyn error::Error>> 
     const GUTENBERG_END_MARKER: &str = "*** END OF THIS PROJECT GUTENBERG EBOOK";
 
     debug!("Using {} as English corpus", url);
-    let body = reqwest::blocking::get(url)?
-        .text()?;
+
+    // Filename for the corpus cache
+    let mut hasher = DefaultHasher::new();
+    url.hash(&mut hasher);
+    let corpus_filename = format!("/var/tmp/cryptopals-corpus-{:x}.txt", hasher.finish());
+
+    // Read corpus from the cache or Internet
+    let body: String;
+    if let Ok(body_from_file) = fs::read_to_string(&corpus_filename) {
+        info!("Read text of {} from cache file {}", url, corpus_filename);
+        body = body_from_file;
+    } else {
+        body = reqwest::blocking::get(url)?
+            .text()?;
+        info!("Write text from {} to cache file {}", url, corpus_filename);
+        let mut f = fs::File::create(corpus_filename)?;
+        f.write_all(body.as_bytes())?;
+    }
 
     // Select all text between the two markers, starting on a new line
     let start_marker =
@@ -90,7 +109,7 @@ mod test {
     use super::*;
 
     fn empty_freq() -> Vec<f64> {
-        let mut expected_f : Vec<f64> = Vec::new();
+        let mut expected_f: Vec<f64> = Vec::new();
         expected_f.resize(128, 0.0);
         expected_f
     }

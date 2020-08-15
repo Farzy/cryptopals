@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#[macro_use] extern crate log;
+#[macro_use]
+extern crate log;
 
 mod set1;
 

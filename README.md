@@ -19,6 +19,8 @@ cargo run
 Prefix the binary with `RUST_LOG=cryptopals=debug` in order to
 display debug messages.
 
+Use `RUST_LOG=cryptopals=info` to display less information.
+
 # Licence
 
 Copyright 2020 Farzad FARID <farzy@farzy.org>

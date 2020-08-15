@@ -18,7 +18,7 @@ use std::{error, fmt};
 use std::fmt::Write;
 use std::char;
 
-const BASE64_ALPHABET : [char; 65] = [
+const BASE64_ALPHABET: [char; 65] = [
     'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
     'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
     '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/', '='
@@ -102,18 +102,18 @@ pub trait BytesCrypto {
 }
 
 impl BytesCrypto for [u8] {
-/// Convert an array of bytes to a hex string
- ///
- /// # Examples
- ///
- /// ```
- /// use cryptopals::crypto::BytesCrypto;
- ///
- /// assert_eq!("41".to_owned(), vec![65].bytes2hex());
- /// assert_eq!(
- ///    "48656c6c6f2c20776f726c6421".to_owned(),
- ///    vec![72, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100, 33].bytes2hex());
- /// ```
+    /// Convert an array of bytes to a hex string
+     ///
+     /// # Examples
+     ///
+     /// ```
+     /// use cryptopals::crypto::BytesCrypto;
+     ///
+     /// assert_eq!("41".to_owned(), vec![65].bytes2hex());
+     /// assert_eq!(
+     ///    "48656c6c6f2c20776f726c6421".to_owned(),
+     ///    vec![72, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100, 33].bytes2hex());
+     /// ```
     fn bytes2hex(&self) -> String {
         let mut s = String::with_capacity(self.len() * 2);
         for b in self {
@@ -172,7 +172,6 @@ impl BytesCrypto for [u8] {
             .collect()
     }
 }
-
 
 
 #[cfg(test)]
@@ -240,8 +239,8 @@ mod test {
     #[test]
     fn bytes_hello_world() {
         assert_eq!(
-           "48656c6c6f2c20776f726c6421".to_owned(),
-           vec![72, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100, 33].bytes2hex()
+            "48656c6c6f2c20776f726c6421".to_owned(),
+            vec![72, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100, 33].bytes2hex()
         );
     }
 

@@ -29,9 +29,9 @@ pub fn main() {
             println!("Base64({}) = {}", input, x);
             println!("String translation: {}", input.hex2string().unwrap());
             assert_eq!(output, x);
-        },
+        }
         Err(e) => {
             println!("'{}' is an invalid hex string: {}", input, e)
-        },
+        }
     }
 }
