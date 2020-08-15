@@ -14,7 +14,7 @@
 
 extern crate reqwest;
 
-use cryptopals::{helper, english};
+use cryptopals::{helper, english, stats};
 use cryptopals::crypto::HexString;
 
 // Alice in Wonderland
@@ -55,9 +55,9 @@ pub fn main() {
 
             let euclidean_score = english::euclidean_distance(&corpus_freq, &xored_freq);
 
-            let pearson_score = covariance(&corpus_freq, &xored_freq)
-                / std_dev(&corpus_freq)
-                / std_dev(&xored_freq);
+            let pearson_score = stats::covariance(&corpus_freq, &xored_freq)
+                / stats::std_dev(&corpus_freq)
+                / stats::std_dev(&xored_freq);
 
             debug!("input xor {} = '{}'", xor, xored_string);
             debug!(" - Euclidean score: {}", euclidean_score);
@@ -82,24 +82,3 @@ pub fn main() {
 }
 
 
-fn mean(values: &[f64]) -> f64 {
-    values.iter().sum::<f64>() / values.len() as f64
-}
-
-fn std_dev(values: &[f64]) -> f64 {
-    let m = mean(values);
-    (values.iter()
-        .map(|x| (*x - m).powi(2))
-        .sum::<f64>()
-        / (values.len() as f64)).sqrt()
-}
-
-fn covariance(values_x: &[f64], values_y: &[f64]) -> f64 {
-    assert_eq!(values_x.len(), values_y.len(), "Both arrays must be the same size");
-
-    let mean_x = mean(values_x);
-    let mean_y = mean(values_y);
-    values_x.iter().zip(values_y)
-        .map(|(x, y)| (*x - mean_x) * (*y - mean_y))
-        .sum::<f64>() / values_x.len() as f64
-}

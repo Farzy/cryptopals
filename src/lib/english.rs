@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//! Text / Corpus manipulation functions
+
 use std::{error, fs};
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
