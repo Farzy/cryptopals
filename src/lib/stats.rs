@@ -31,7 +31,7 @@ pub fn std_dev(values: &[f64]) -> f64 {
 
 /// Compute the covariance of two equal length series
 ///
-/// Panics:
+/// # Panics:
 ///
 /// The function panics if the series are not of equal length.
 pub fn covariance(values_x: &[f64], values_y: &[f64]) -> f64 {

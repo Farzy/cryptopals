@@ -40,6 +40,7 @@ impl fmt::Display for InvalidHexString {
 
 impl error::Error for InvalidHexString {}
 
+/// Add hexadecimal string manipulation to strings.
 pub trait HexString {
     fn hex2bytes(&self) -> Result<Vec<u8>>;
     fn hex2string(&self) -> Result<String>;
@@ -95,6 +96,7 @@ impl HexString for &str {
     }
 }
 
+/// Add hexadecimal strings, base64 and xor functions to arrays of bytes.
 pub trait BytesCrypto {
     fn bytes2hex(&self) -> String;
     fn base64_encode(&self) -> String;
@@ -136,7 +138,7 @@ impl BytesCrypto for [u8] {
     ///
     /// # References
     ///
-    /// This code is inspired by this article: https://levelup.gitconnected.com/implementing-base64-in-rust-34ef6db1e73a
+    /// This code is inspired by [this article](https://levelup.gitconnected.com/implementing-base64-in-rust-34ef6db1e73a).
     fn base64_encode(&self) -> String {
         self
             .chunks(3)

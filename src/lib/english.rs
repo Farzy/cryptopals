@@ -68,6 +68,10 @@ pub fn calc_frequencies(text: &str) -> Vec<f64> {
 
 /// Compute the Euclidean distance between two frequency series
 ///
+/// # Panics:
+///
+/// The function panics if the series are not of equal length.
+///
 /// # Examples
 ///
 /// ```
@@ -81,7 +85,7 @@ pub fn calc_frequencies(text: &str) -> Vec<f64> {
 ///
 /// # References
 ///
-/// https://www.geeksforgeeks.org/pandas-compute-the-euclidean-distance-between-two-series/
+/// * [https://www.geeksforgeeks.org/pandas-compute-the-euclidean-distance-between-two-series](https://www.geeksforgeeks.org/pandas-compute-the-euclidean-distance-between-two-series/)
 pub fn euclidean_distance(freq1: &[f64], freq2: &[f64]) -> f64 {
     assert_eq!(freq1.len(), freq2.len(), "bytes array differ in size");
 
