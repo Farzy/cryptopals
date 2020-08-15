@@ -28,6 +28,6 @@ pub fn main() {
     ).bytes2hex();
 
     println!("{} ^ {} = {}", input1, input2, output);
-    println!("String translation = {}", (&output[..]).hex2string().unwrap());
+    println!("String translation = {}", output.hex2string().unwrap());
     assert_eq!(expected_output, output);
 }

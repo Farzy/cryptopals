@@ -46,7 +46,7 @@ pub trait HexString {
     fn hex2string(&self) -> Result<String>;
 }
 
-impl HexString for &str {
+impl HexString for str {
     /// Convert a hex string to an array of bytes
     ///
     /// # Examples
