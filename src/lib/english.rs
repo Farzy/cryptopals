@@ -20,6 +20,24 @@ use std::io::Write;
 /// Compute the characters frequency in a text
 ///
 /// The code only takes ASCII characters into consideration and ignore any other character.
+///
+/// # Examples:
+///
+/// ```
+/// use cryptopals::english;
+///
+/// let str = "Forêt";
+/// let str_clean = "Fort";
+/// let strlen = str_clean.len();
+///
+/// let mut expected_freq: Vec<f64> = Vec::new();
+/// expected_freq.resize(128, 0.0);
+/// for i in str_clean.to_uppercase().as_bytes() {
+///     expected_freq[*i as usize] += 1.0 / strlen as f64;
+/// }
+/// let f = english::calc_frequencies(str);
+/// assert_eq!(expected_freq, f);
+/// ```
 pub fn calc_frequencies(text: &str) -> Vec<f64> {
     // Store characters and their frequency in order, defaulting to 0
     let mut frequencies: Vec<f64> = Vec::new();
@@ -48,10 +66,23 @@ pub fn calc_frequencies(text: &str) -> Vec<f64> {
 
 /// Compute the Euclidean distance between two frequency series
 ///
+/// # Examples
+///
+/// ```
+/// use cryptopals::english;
+///
+/// assert_eq!(
+///      (1.0f64 + 4.0 + 9.0 + 16.0).sqrt(),
+///      english::euclidean_distance(&vec![1.0, 0.0, 3.0, 0.0], &vec![0.0, 2.0, 0.0, 4.0])
+/// );
+/// ```
+///
 /// # References
 ///
 /// https://www.geeksforgeeks.org/pandas-compute-the-euclidean-distance-between-two-series/
 pub fn euclidean_distance(freq1: &[f64], freq2: &[f64]) -> f64 {
+    assert_eq!(freq1.len(), freq2.len(), "bytes array differ in size");
+
     freq1.iter().zip(freq2.iter())
         .map(|(&f1, &f2)| (f1 - f2).powi(2))
         .sum::<f64>()
@@ -174,5 +205,35 @@ mod test {
         }
         let f = calc_frequencies(str);
         assert_eq!(expected_freq, f);
+    }
+
+    #[test]
+    fn euclid_empty() {
+        assert_eq!(
+            0.0,
+            euclidean_distance(&vec![] as &Vec<f64>, &vec![] as &Vec<f64>)
+        );
+    }
+
+    #[test]
+    fn euclid_equal() {
+        assert_eq!(
+            0.0,
+            euclidean_distance(&vec![1.0, 2.0, 3.0, 4.0], &vec![1.0, 2.0, 3.0, 4.0])
+        );
+    }
+
+    #[test]
+    fn euclid_any() {
+        assert_eq!(
+            (1.0f64 + 4.0 + 9.0 + 16.0).sqrt(),
+            euclidean_distance(&vec![1.0, 0.0, 3.0, 0.0], &vec![0.0, 2.0, 0.0, 4.0])
+        );
+    }
+
+    #[test]
+    #[should_panic = "bytes array differ in size"]
+    fn euclid_bad_size() {
+        let _ = euclidean_distance(&vec![1.0, 2.0, 3.0, 4.0], &vec![1.0, 2.0, 3.0]);
     }
 }
