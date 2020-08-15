@@ -55,6 +55,7 @@ pub fn calc_frequencies(text: &str) -> Vec<f64> {
         }
     }
 
+    // Convert to percentages
     if total != 0 {
         for item in frequencies.iter_mut() {
             *item /= total as f64;
