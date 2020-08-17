@@ -19,6 +19,10 @@ use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 use std::io::Write;
 
+
+/// Alice in Wonderland in text format from Project Gutenberg
+pub const GUTENBERG_CORPUS_URL: &str = "https://www.gutenberg.org/files/11/11-0.txt";
+
 /// Compute the characters frequency in a text
 ///
 /// The code only takes ASCII characters into consideration and ignore any other character.

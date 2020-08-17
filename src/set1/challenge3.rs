@@ -17,16 +17,12 @@ extern crate reqwest;
 use cryptopals::{helper, english, stats};
 use cryptopals::crypto::HexString;
 
-// Alice in Wonderland
-const GUTENBERG_CORPUS_URL: &str = "https://www.gutenberg.org/files/11/11-0.txt";
-
-
 pub fn main() {
     helper::section("Set 1 / Challenge 3");
 
     let input = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
 
-    let corpus = match english::get_gutenberg_corpus(GUTENBERG_CORPUS_URL) {
+    let corpus = match english::get_gutenberg_corpus(english::GUTENBERG_CORPUS_URL) {
         Ok(corpus) => corpus,
         Err(error) => {
             eprintln!("An error happened: {}", error);
