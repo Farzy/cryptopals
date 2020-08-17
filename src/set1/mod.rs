@@ -17,9 +17,11 @@
 mod challenge1;
 mod challenge2;
 mod challenge3;
+mod challenge4;
 
 pub fn main() {
     challenge1::main();
     challenge2::main();
     challenge3::main();
+    challenge4::main();
 }
