@@ -14,6 +14,11 @@
 
 //! Helper functions for displaying titles and subtitles for readability
 
+use std::{fs, error};
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
+use std::io::Write;
+
 /// Display a section title
 ///
 /// # Examples
@@ -61,4 +66,36 @@ pub fn subsection(title: &str) {
     let dashes = "-".repeat(len + 1);
     println!("\n{}:", title);
     println!("{}\n", dashes);
+}
+
+/// Read a text from from an URL and cache it in /var/tmp, return the body
+///
+///# Examples
+///
+/// ```
+/// use cryptopals::helper;
+///
+/// let body = helper::read_from_url("https://httpbin.org/base64/SFRUUEJJTiBpcyBhd2Vzb21l").unwrap();
+/// assert_eq!("HTTPBIN is awesome", body);
+/// ```
+pub fn read_from_url(url: &str) -> Result<String, Box<dyn error::Error>> {
+    // Create filename for the file cache
+    let mut hasher = DefaultHasher::new();
+    url.hash(&mut hasher);
+    let filename = format!("/var/tmp/cryptopals-{:x}.txt", hasher.finish());
+
+    // Read file from the cache or Internet
+    let body: String;
+    if let Ok(body_from_file) = fs::read_to_string(&filename) {
+        info!("Read text of {} from cache file {}", url, filename);
+        body = body_from_file;
+    } else {
+        body = reqwest::blocking::get(url)?
+            .text()?;
+        info!("Write text from {} to cache file {}", url, filename);
+        let mut f = fs::File::create(filename)?;
+        f.write_all(body.as_bytes())?;
+    }
+
+    Ok(body)
 }

@@ -14,10 +14,8 @@
 
 //! Text / Corpus manipulation functions
 
-use std::{error, fs};
-use std::collections::hash_map::DefaultHasher;
-use std::hash::{Hash, Hasher};
-use std::io::Write;
+use std::error;
+use crate::helper;
 
 
 /// Alice in Wonderland in text format from Project Gutenberg
@@ -111,23 +109,7 @@ pub fn get_gutenberg_corpus(url: &str) -> Result<String, Box<dyn error::Error>> 
 
     debug!("Using {} as English corpus", url);
 
-    // Filename for the corpus cache
-    let mut hasher = DefaultHasher::new();
-    url.hash(&mut hasher);
-    let corpus_filename = format!("/var/tmp/cryptopals-corpus-{:x}.txt", hasher.finish());
-
-    // Read corpus from the cache or Internet
-    let body: String;
-    if let Ok(body_from_file) = fs::read_to_string(&corpus_filename) {
-        info!("Read text of {} from cache file {}", url, corpus_filename);
-        body = body_from_file;
-    } else {
-        body = reqwest::blocking::get(url)?
-            .text()?;
-        info!("Write text from {} to cache file {}", url, corpus_filename);
-        let mut f = fs::File::create(corpus_filename)?;
-        f.write_all(body.as_bytes())?;
-    }
+    let body = helper::read_from_url(&url)?;
 
     // Select all text between the two markers, starting on a new line
     let start_marker =
