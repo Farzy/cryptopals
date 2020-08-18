@@ -18,6 +18,7 @@ mod challenge1;
 mod challenge2;
 mod challenge3;
 mod challenge4;
+mod challenge5;
 
 pub fn main() {
     challenge1::main();
@@ -27,4 +28,5 @@ pub fn main() {
         eprintln!("An error happened: {}", error);
         return;
     }
+    challenge5::main();
 }
