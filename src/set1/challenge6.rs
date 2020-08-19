@@ -12,23 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Set 1
 
-mod challenge1;
-mod challenge2;
-mod challenge3;
-mod challenge4;
-mod challenge5;
-mod challenge6;
+use cryptopals::helper;
+use cryptopals::crypto::BytesCrypto;
 
 pub fn main() {
-    challenge1::main();
-    challenge2::main();
-    challenge3::main();
-    if let Err(error) = challenge4::main() {
-        eprintln!("An error happened: {}", error);
-        return;
-    }
-    challenge5::main();
-    challenge6::main();
+    helper::section("Set 1 / Challenge 6");
+
+    let text1 = "this is a test";
+    let text2 = "wokka wokka!!!";
+
+    let hamming = text1.as_bytes().hamming_distance(text2.as_bytes());
+
+    println!("The Hamming distance between '{}' and '{}' is {}.", text1, text2, hamming);
 }

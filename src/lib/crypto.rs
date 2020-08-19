@@ -101,6 +101,7 @@ pub trait BytesCrypto {
     fn bytes2hex(&self) -> String;
     fn base64_encode(&self) -> String;
     fn xor(&self, other: &[u8]) -> Vec<u8>;
+    fn hamming_distance(&self, other: &[u8]) -> u32;
 }
 
 impl BytesCrypto for [u8] {
@@ -173,8 +174,27 @@ impl BytesCrypto for [u8] {
             .map(|(&x, &y)| x ^ y)
             .collect()
     }
-}
 
+    /// Compute the Hamming distance between two byte arrays
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use cryptopals::crypto::BytesCrypto;
+    ///
+    /// assert_eq!(
+    ///            37,
+    ///            "this is a test".as_bytes()
+    ///                .hamming_distance("wokka wokka!!!".as_bytes()));
+    /// ```
+    fn hamming_distance(&self, other: &[u8]) -> u32 {
+        assert_eq!(self.len(), other.len(), "bytes arrays differ in size");
+
+        self.iter().zip(other.iter())
+            .map(|(a, b)| (a ^ b).count_ones())
+            .sum::<u32>()
+    }
+}
 
 #[cfg(test)]
 mod test {
@@ -302,5 +322,22 @@ mod test {
         assert_eq!(
             vec![0b00000000, 0b11001100],
             vec![0b11111111, 0b11110000].xor(&vec![0b11111111, 0b00111100]))
+    }
+
+    #[test]
+    fn hamming_37() {
+        assert_eq!(
+            37,
+            "this is a test".as_bytes()
+                .hamming_distance("wokka wokka!!!".as_bytes()));
+    }
+
+    #[test]
+    #[should_panic]
+    fn hamming_different_len() {
+        assert_eq!(
+            37,
+            "this is a test".as_bytes()
+                .hamming_distance("wokka wokka".as_bytes()));
     }
 }
