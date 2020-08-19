@@ -22,6 +22,7 @@ const CHALLENGE4_FILE: &str = "https://cryptopals.com/static/challenge-data/4.tx
 
 pub fn main() -> Result<(), Box<dyn Error>> {
     helper::section("Set 1 / Challenge 4");
+    println!("Solving https://cryptopals.com/sets/1/challenges/4:\nDetect single-character XOR\n");
 
     let corpus = english::get_gutenberg_corpus(english::GUTENBERG_CORPUS_URL)?;
     let corpus_freq = english::calc_frequencies(&corpus);

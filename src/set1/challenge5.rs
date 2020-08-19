@@ -18,6 +18,7 @@ use cryptopals::crypto::BytesCrypto;
 
 pub fn main() {
     helper::section("Set 1 / Challenge 5");
+    println!("Solving https://cryptopals.com/sets/1/challenges/5:\nImplement repeating-key XOR\n");
 
     let input = "Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal";
     let xor = "ICE";

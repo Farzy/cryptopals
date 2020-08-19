@@ -18,6 +18,7 @@ use cryptopals::crypto::{HexString, BytesCrypto};
 // Set 1 / Challenge 2
 pub fn main() {
     helper::section("Set 1 / Challenge 2");
+    println!("Solving https://cryptopals.com/sets/1/challenges/2:\nFixed XOR\n");
 
     let input1 = "1c0111001f010100061a024b53535009181c";
     let input2 = "686974207468652062756c6c277320657965";

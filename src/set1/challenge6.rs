@@ -18,6 +18,7 @@ use cryptopals::crypto::BytesCrypto;
 
 pub fn main() {
     helper::section("Set 1 / Challenge 6");
+    println!("Solving https://cryptopals.com/sets/1/challenges/6:\nBreak repeating-key XOR\n");
 
     let text1 = "this is a test";
     let text2 = "wokka wokka!!!";

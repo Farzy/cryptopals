@@ -27,7 +27,6 @@ pub fn main() {
     challenge3::main();
     if let Err(error) = challenge4::main() {
         eprintln!("An error happened: {}", error);
-        return;
     }
     challenge5::main();
     challenge6::main();
