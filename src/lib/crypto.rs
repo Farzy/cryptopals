@@ -44,6 +44,7 @@ impl error::Error for InvalidHexString {}
 pub trait HexString {
     fn hex2bytes(&self) -> Result<Vec<u8>>;
     fn hex2string(&self) -> Result<String>;
+    fn base64_decode(&self) -> Result<Vec<u8>>;
 }
 
 impl HexString for str {
@@ -93,6 +94,25 @@ impl HexString for str {
             s.push(c);
         }
         Ok(s)
+    }
+
+    /// Decode a Base64 string to a bye array
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use cryptopals::crypto::HexString;
+    ///
+    /// assert_eq!(String::from("QUJD").base64_decode().unwrap(), vec![65, 66, 67]);
+    /// assert_eq!(String::from("QUJD").base64_decode().unwrap(), vec![65, 66, 67]);
+    /// assert_eq!(String::from("SGVsbG8sIHdvcmxkIQ==").base64_decode().unwrap(), "Hello, world!".as_bytes());
+    /// ```
+    ///
+    /// # References
+    ///
+    /// This code is inspired by [this article](https://levelup.gitconnected.com/implementing-base64-in-rust-34ef6db1e73a).
+    fn base64_decode(&self) -> Result<Vec<u8>> {
+        unimplemented!()
     }
 }
 
