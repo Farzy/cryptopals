@@ -98,13 +98,15 @@ impl HexString for str {
 
     /// Decode a Base64 string to a bye array
     ///
+    /// XXX This version accepts invalid Base64 strings with '=' anywhere.
+    ///
     /// # Examples
     ///
     /// ```
     /// use cryptopals::crypto::HexString;
     ///
     /// assert_eq!(String::from("QUJD").base64_decode().unwrap(), vec![65, 66, 67]);
-    /// assert_eq!(String::from("QUJD").base64_decode().unwrap(), vec![65, 66, 67]);
+    /// assert_eq!(String::from("QUJD").base64_decode().unwrap(), &[65, 66, 67]);
     /// assert_eq!(String::from("SGVsbG8sIHdvcmxkIQ==").base64_decode().unwrap(), "Hello, world!".as_bytes());
     /// ```
     ///
@@ -112,7 +114,46 @@ impl HexString for str {
     ///
     /// This code is inspired by [this article](https://levelup.gitconnected.com/implementing-base64-in-rust-34ef6db1e73a).
     fn base64_decode(&self) -> Result<Vec<u8>> {
-        unimplemented!()
+        let mut padding_count = 0;
+        let b64_bytes: Result<Vec<u8>> = self.bytes()
+            .filter(|&b| b != '\n' as u8 && b != '\r' as u8)
+            .map(|b| {
+                match b {
+                    // A to Z => 0 to 25
+                    65..=90 => Ok(b - 65),
+                    // a to z => 26 to 51
+                    97..=122 => Ok(b - 97 + 26),
+                    // 0 to 9 => 52 to 61
+                    48..=57 => Ok(b + 4),
+                    // + => 62
+                    43 => Ok(62),
+                    // / => 63
+                    47 => Ok(63),
+                    // = => 0
+                    61 => { padding_count += 1 ; Ok(0) },
+                    _ => Err(format!("invalid byte {} (0x{:X}) in Base64 string", b as char, b).into())
+                }
+            })
+            .collect();
+        if b64_bytes.is_err() {
+            return b64_bytes;
+        }
+        let b64_bytes= b64_bytes.unwrap();
+        if b64_bytes.len() % 4 != 0 {
+            return Err(format!("invalid Base64 length: {}", b64_bytes.len()).into());
+        }
+        let mut bytes = b64_bytes
+            .chunks(4)
+            .map(|quartet| {
+                let b1 = quartet[0] << 2                | (quartet[1] & 0b00110000) >> 4;
+                let b2 = (quartet[1] & 0b00001111) << 4 | (quartet[2] & 0b00111100) >> 2;
+                let b3 = (quartet[2] & 0b00000011) << 6 | quartet[3];
+                vec![b1, b2, b3]
+            })
+            .flatten()
+            .collect::<Vec<u8>>();
+        bytes.resize(bytes.len() - padding_count, 0);
+        Ok(bytes)
     }
 }
 
