@@ -17,6 +17,8 @@
 use std::{error, fmt};
 use std::fmt::Write;
 use std::char;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 const BASE64_ALPHABET: [char; 65] = [
     'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
@@ -96,9 +98,7 @@ impl HexString for str {
         Ok(s)
     }
 
-    /// Decode a Base64 string to a bye array
-    ///
-    /// XXX This version accepts invalid Base64 strings with '=' anywhere.
+    /// Decode a Base64 string to a byte array
     ///
     /// # Examples
     ///
@@ -106,8 +106,8 @@ impl HexString for str {
     /// use cryptopals::crypto::HexString;
     ///
     /// assert_eq!(String::from("QUJD").base64_decode().unwrap(), vec![65, 66, 67]);
-    /// assert_eq!(String::from("QUJD").base64_decode().unwrap(), &[65, 66, 67]);
-    /// assert_eq!(String::from("SGVsbG8sIHdvcmxkIQ==").base64_decode().unwrap(), "Hello, world!".as_bytes());
+    /// assert_eq!("QUJD".base64_decode().unwrap(), &[65, 66, 67]);
+    /// assert_eq!("SGVsbG8sIHdvcmxkIQ==".base64_decode().unwrap(), "Hello, world!".as_bytes());
     /// ```
     ///
     /// # References
@@ -115,34 +115,55 @@ impl HexString for str {
     /// This code is inspired by [this article](https://levelup.gitconnected.com/implementing-base64-in-rust-34ef6db1e73a).
     fn base64_decode(&self) -> Result<Vec<u8>> {
         let mut padding_count = 0;
-        let b64_bytes: Result<Vec<u8>> = self.bytes()
-            .filter(|&b| b != '\n' as u8 && b != '\r' as u8)
-            .map(|b| {
-                match b {
+        // We need interior mutability here because we both update and read the byte array's
+        // length in the same expression, but not at the same time.
+        let b64_length = Rc::new(RefCell::new(self.len()));
+        let b64_bytes: Result<Vec<u8>> = self
+            .bytes()
+            // Remove return chars all the while adjusting array length
+            .filter(|&b| {
+                if b != '\n' as u8 && b != '\r' as u8 {
+                    return true;
+                } else {
+                    *b64_length.borrow_mut() -= 1;
+                    return false;
+                }
+            })
+            .enumerate()
+            .map(| (index, byte)| {
+                match byte {
                     // A to Z => 0 to 25
-                    65..=90 => Ok(b - 65),
+                    65..=90 => Ok(byte - 65),
                     // a to z => 26 to 51
-                    97..=122 => Ok(b - 97 + 26),
+                    97..=122 => Ok(byte - 97 + 26),
                     // 0 to 9 => 52 to 61
-                    48..=57 => Ok(b + 4),
+                    48..=57 => Ok(byte + 4),
                     // + => 62
                     43 => Ok(62),
                     // / => 63
                     47 => Ok(63),
                     // = => 0
-                    61 => { padding_count += 1 ; Ok(0) },
-                    _ => Err(format!("invalid byte {} (0x{:X}) in Base64 string", b as char, b).into())
+                    61 => {
+                        // Equal sign only authorized at end of string
+                        if index >= *b64_length.borrow() - 2 {
+                            padding_count += 1;
+                            Ok(0)
+                        } else {
+                            Err(format!("invalid byte '=' at position {} in Base64 string", index).into())
+                        }
+                    },
+                    _ => Err(format!("invalid byte '{}' (0x{:X}) at position {} in Base64 string", byte as char, byte, index).into())
                 }
             })
             .collect();
         if b64_bytes.is_err() {
             return b64_bytes;
         }
-        let b64_bytes= b64_bytes.unwrap();
-        if b64_bytes.len() % 4 != 0 {
-            return Err(format!("invalid Base64 length: {}", b64_bytes.len()).into());
+        if *b64_length.borrow() % 4 != 0 {
+            return Err(format!("invalid Base64 length: {}", *b64_length.borrow()).into());
         }
         let mut bytes = b64_bytes
+            .unwrap()
             .chunks(4)
             .map(|quartet| {
                 let b1 = quartet[0] << 2                | (quartet[1] & 0b00110000) >> 4;
@@ -152,6 +173,7 @@ impl HexString for str {
             })
             .flatten()
             .collect::<Vec<u8>>();
+        // Remove extra bytes created by the padding
         bytes.resize(bytes.len() - padding_count, 0);
         Ok(bytes)
     }
@@ -301,6 +323,78 @@ mod test {
     #[test]
     fn hex2str_err() {
         assert!("1020ZZ".hex2string().is_err());
+    }
+
+    #[test]
+    fn base64_decode_short_string() {
+        assert_eq!(
+            String::from("QUJD").base64_decode().unwrap(),
+            vec![65, 66, 67]
+        );
+    }
+
+    #[test]
+    fn base64_decode_short_str() {
+        assert_eq!(
+            "QUJD".base64_decode().unwrap(),
+            &[65, 66, 67]
+        );
+    }
+
+    #[test]
+    fn base64_one_equal_sign() {
+        assert_eq!(
+            "QUI=".base64_decode().unwrap(),
+            &[65, 66]
+        );
+    }
+
+    #[test]
+    fn base64_decode_classic() {
+        assert_eq!(
+            "SGVsbG8sIHdvcmxkIQ==".base64_decode().unwrap(),
+            "Hello, world!".as_bytes()
+        );
+    }
+
+    #[test]
+    fn base64_decode_bad_length() {
+        assert_eq!(
+            "SGVsbG8sIHdvcmxkIQ=".base64_decode().unwrap_err().to_string(),
+            "invalid Base64 length: 19"
+        );
+    }
+
+    #[test]
+    fn base64_decode_bad_char() {
+        assert_eq!(
+            "SGVs!G8sIHdvcmxkIQ==".base64_decode().unwrap_err().to_string(),
+            "invalid byte '!' (0x21) at position 4 in Base64 string"
+        );
+    }
+
+    #[test]
+    fn base64_decode_bad_equal() {
+        assert_eq!(
+            "S=VsbG8sIHdvcmxkIQ==".base64_decode().unwrap_err().to_string(),
+            "invalid byte '=' at position 1 in Base64 string"
+        );
+    }
+
+    #[test]
+    fn base64_decode_return() {
+        assert_eq!(
+            "VGhpcyBpcyBhCm11bHRpbGluZSBzdHJpbmcu".base64_decode().unwrap(),
+            "This is a\nmultiline string.".as_bytes()
+        );
+    }
+
+    #[test]
+    fn base64_decode_return_multiple() {
+        assert_eq!(
+            "VGhpcyBpcyBhCgptdWx0aWxpbmUgc3RyaW5nLgo=".base64_decode().unwrap(),
+            "This is a\n\nmultiline string.\n".as_bytes()
+        );
     }
 
     #[test]
