@@ -14,10 +14,12 @@
 
 
 use cryptopals::helper;
-use cryptopals::crypto::HexString;
+use cryptopals::crypto::{HexString, BytesCrypto};
 use std::error::Error;
+use std::ops::Range;
 
 const CHALLENGE6_FILE: &str = "https://cryptopals.com/static/challenge-data/6.txt";
+const KEYSIZE_RANGE: Range<usize> = 2..42;
 
 pub fn main() -> Result<(), Box<dyn Error>> {
     helper::section("Set 1 / Challenge 6");
@@ -25,8 +27,35 @@ pub fn main() -> Result<(), Box<dyn Error>> {
 
     let input = helper::read_from_url(CHALLENGE6_FILE)?.base64_decode()?;
 
-    let raw_output= String::from_utf8(input)?;
-    println!("Encrypted input:\n{:?}", raw_output);
+    // let raw_output = String::from_utf8(input)?;
+    // println!("Encrypted input:\n{:?}", raw_output);
 
+    // Guess Key size
+    let mut keysize_distances: Vec<(usize, f64)> = Vec::with_capacity(KEYSIZE_RANGE.len());
+    let mut keysize_distances2: Vec<(usize, f64)> = Vec::with_capacity(KEYSIZE_RANGE.len());
+    for keysize in KEYSIZE_RANGE {
+        keysize_distances.push(
+            (keysize,
+             (input[0..keysize].hamming_distance(&input[keysize..(2 * keysize)])) as f64
+                 / (keysize as f64)));
+
+        let mut sum = 0.0;
+        for i in 0..3 {
+            sum += input[(0 * keysize)..((0 + 1) * keysize)]
+                .hamming_distance(&input[((i + 1) * keysize)..((i + 2) * keysize)]) as f64;
+        }
+        sum /= 3.0 * (keysize as f64);
+        keysize_distances2.push((keysize, sum));
+    }
+    keysize_distances.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
+    keysize_distances2.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
+    println!("Keysize scores 1: {:?}",
+             keysize_distances.iter()
+                 .map(|(k, v)| format!("({}: {:.3})", *k, *v))
+                 .collect::<Vec<_>>().join(", "));
+    println!("Keysize scores 2: {:?}",
+             keysize_distances2.iter()
+                 .map(|(k, v)| format!("({}: {:.3})", *k, *v))
+                 .collect::<Vec<_>>().join(", "));
     Ok(())
 }
