@@ -13,7 +13,7 @@
 // limitations under the License.
 
 
-use cryptopals::helper;
+use cryptopals::{helper, english};
 use cryptopals::crypto::{HexString, BytesCrypto};
 use std::error::Error;
 use std::ops::Range;
@@ -59,11 +59,17 @@ pub fn main() -> Result<(), Box<dyn Error>> {
                  .map(|(k, v)| format!("({}: {:.3})", *k, *v))
                  .collect::<Vec<_>>().join(", "));
 
-    // Keep intersection for best keysizes
+    // Keep union for best keysizes
     let keysize_set: HashSet<usize> = keysize_distances[0..3].iter().map(|k| k.0).collect();
     let keysize_set2: HashSet<usize> = keysize_distances2[0..3].iter().map(|k| k.0).collect();
-    let keysizes: Vec<_> = keysize_set.intersection(&keysize_set2).cloned().collect();
-    println!("Most popular common keysizes from first 3 entries: {:?}", keysizes);
+    let keysizes: Vec<_> = keysize_set.union(&keysize_set2).cloned().collect();
+    println!("Most popular key sizes from first 3 entries: {:?}", keysizes);
+
+    let corpus_freq = english::get_english_frequency()?;
+
+    let mut best_euclidean_score = f64::INFINITY;
+    let mut best_key = String::new();
+    let mut best_text = String::new();
 
     for keysize in keysizes {
         println!("Trying keysize = {}", keysize);
@@ -72,7 +78,34 @@ pub fn main() -> Result<(), Box<dyn Error>> {
             transposed_strings[idx_char.0 % keysize].push(idx_char.1 as char);
         }
 
-        let mut _key = String::new();
+        let mut full_key = String::new();
+        for string in transposed_strings {
+            let (_, key, _, _) =
+                english::decrypt_text(string.as_bytes(), &corpus_freq);
+            full_key.push(key as char);
+        }
+        println!("Candidate key found: '{}'", full_key);
+
+        // Now decode all text
+        let output = input.iter()
+            .zip(full_key.bytes().cycle())
+            .map(|(a, b)| a ^ b)
+            .collect::<Vec<u8>>();
+        let text = String::from_utf8(output)?;
+
+        let euclidean_distance = english::euclidean_distance(
+            &english::calc_frequencies(&text),
+            &corpus_freq
+        );
+        if euclidean_distance < best_euclidean_score {
+            best_euclidean_score = euclidean_distance;
+            best_key = full_key;
+            best_text = text;
+        }
     }
+
+    println!("Best key: '{}'", best_key);
+    println!("Full text:\n{}", best_text);
+
     Ok(())
 }
