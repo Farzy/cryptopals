@@ -29,5 +29,7 @@ pub fn main() {
         eprintln!("An error happened: {}", error);
     }
     challenge5::main();
-    challenge6::main();
+    if let Err(error) = challenge6::main() {
+        eprintln!("An error happened: {}", error);
+    }
 }

@@ -14,16 +14,19 @@
 
 
 use cryptopals::helper;
-use cryptopals::crypto::BytesCrypto;
+use cryptopals::crypto::HexString;
+use std::error::Error;
 
-pub fn main() {
+const CHALLENGE6_FILE: &str = "https://cryptopals.com/static/challenge-data/6.txt";
+
+pub fn main() -> Result<(), Box<dyn Error>> {
     helper::section("Set 1 / Challenge 6");
     println!("Solving https://cryptopals.com/sets/1/challenges/6:\nBreak repeating-key XOR\n");
 
-    let text1 = "this is a test";
-    let text2 = "wokka wokka!!!";
+    let input = helper::read_from_url(CHALLENGE6_FILE)?.base64_decode()?;
 
-    let hamming = text1.as_bytes().hamming_distance(text2.as_bytes());
+    let raw_output= String::from_utf8(input)?;
+    println!("Encrypted input:\n{:?}", raw_output);
 
-    println!("The Hamming distance between '{}' and '{}' is {}.", text1, text2, hamming);
+    Ok(())
 }
