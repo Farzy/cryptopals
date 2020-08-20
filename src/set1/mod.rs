@@ -24,7 +24,9 @@ mod challenge6;
 pub fn main() {
     challenge1::main();
     challenge2::main();
-    challenge3::main();
+    if let Err(error) = challenge3::main() {
+        eprintln!("An error happened: {}", error);
+    }
     if let Err(error) = challenge4::main() {
         eprintln!("An error happened: {}", error);
     }
