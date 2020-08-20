@@ -13,7 +13,7 @@
 // limitations under the License.
 
 
-use cryptopals::{helper, english};
+use cryptopals::{helper, english, crypto};
 use cryptopals::crypto::{HexString, BytesCrypto};
 use std::error::Error;
 use std::ops::Range;
@@ -81,7 +81,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
         let mut full_key = String::new();
         for string in transposed_strings {
             let (_, key, _, _) =
-                english::decrypt_text(string.as_bytes(), &corpus_freq);
+                crypto::decrypt_text(string.as_bytes(), &corpus_freq);
             full_key.push(key as char);
         }
         println!("Candidate key found: '{}'", full_key);

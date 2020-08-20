@@ -14,7 +14,7 @@
 
 extern crate reqwest;
 
-use cryptopals::{helper, english};
+use cryptopals::{helper, english, crypto};
 use cryptopals::crypto::HexString;
 use std::error::Error;
 
@@ -39,7 +39,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
         let input_bytes = input.hex2bytes().unwrap();
 
         let (xored_string, xor, euclidean_score, pearson_score) =
-            english::decrypt_text(&input_bytes, &corpus_freq);
+            crypto::decrypt_text(&input_bytes, &corpus_freq);
 
         if euclidean_score < best_euclidean_score {
             best_euclidean_score = euclidean_score;

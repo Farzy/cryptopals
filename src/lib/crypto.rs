@@ -19,6 +19,7 @@ use std::fmt::Write;
 use std::char;
 use std::cell::RefCell;
 use std::rc::Rc;
+use crate::{english, stats};
 
 const BASE64_ALPHABET: [char; 65] = [
     'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
@@ -278,6 +279,64 @@ impl BytesCrypto for [u8] {
             .sum::<u32>()
     }
 }
+
+
+/// Decrypt a XORed text using a frequency table
+///
+/// # Examples:
+///
+/// ```
+/// use cryptopals::{crypto, english};
+///
+/// let corpus_frequency: Vec<f64> = english::get_english_frequency().unwrap();
+///
+/// let (text, key, euclidean_score, pearson_score) = crypto::decrypt_text("SHRDLU".as_bytes(),
+///                                                                 &corpus_frequency);
+/// ```
+pub fn decrypt_text(input_bytes: &[u8], corpus_freq: &[f64]) -> (String, u8, f64, f64) {
+    let mut best_euclidean_score = f64::INFINITY;
+    let mut best_pearson_score = f64::NEG_INFINITY;
+    let mut best_xor = 0;
+    let mut best_string = String::new();
+
+    // Test all values from 0 to 255 as XOR, reject invalid strings and compute
+    // letter frequencies and Euclidean distance to our English corpus.
+    // Keep the winner.
+    for xor in 0u8..=255 {
+        let xored_input: Vec<_> = input_bytes.iter()
+            .map(|byte| *byte ^ xor)
+            .collect();
+        if let Ok(xored_string) = String::from_utf8(xored_input) {
+            let xored_freq = english::calc_frequencies(&xored_string);
+
+            let euclidean_score = english::euclidean_distance(&corpus_freq, &xored_freq);
+
+            let pearson_score = stats::covariance(&corpus_freq, &xored_freq)
+                / stats::std_dev(&corpus_freq)
+                / stats::std_dev(&xored_freq);
+
+            debug!("input xor {} = '{}'", xor, xored_string);
+            debug!(" - Euclidean score: {}", euclidean_score);
+            debug!(" - Pearson: {}", pearson_score);
+
+            if euclidean_score < best_euclidean_score {
+                best_euclidean_score = euclidean_score;
+                best_xor = xor;
+                best_string = xored_string;
+                debug!(" - Best Euclidean score!");
+            }
+            if pearson_score > best_pearson_score {
+                best_pearson_score = pearson_score;
+                debug!(" - Best Pearson score!");
+            }
+        } else {
+            debug!("input xor {} is an invalid string!", xor);
+        }
+    }
+
+    (best_string, best_xor, best_euclidean_score, best_pearson_score)
+}
+
 
 #[cfg(test)]
 mod test {
