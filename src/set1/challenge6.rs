@@ -17,6 +17,7 @@ use cryptopals::helper;
 use cryptopals::crypto::{HexString, BytesCrypto};
 use std::error::Error;
 use std::ops::Range;
+use std::collections::HashSet;
 
 const CHALLENGE6_FILE: &str = "https://cryptopals.com/static/challenge-data/6.txt";
 const KEYSIZE_RANGE: Range<usize> = 2..42;
@@ -57,5 +58,21 @@ pub fn main() -> Result<(), Box<dyn Error>> {
              keysize_distances2.iter()
                  .map(|(k, v)| format!("({}: {:.3})", *k, *v))
                  .collect::<Vec<_>>().join(", "));
+
+    // Keep intersection for best keysizes
+    let keysize_set: HashSet<usize> = keysize_distances[0..3].iter().map(|k| k.0).collect();
+    let keysize_set2: HashSet<usize> = keysize_distances2[0..3].iter().map(|k| k.0).collect();
+    let keysizes: Vec<_> = keysize_set.intersection(&keysize_set2).cloned().collect();
+    println!("Most popular common keysizes from first 3 entries: {:?}", keysizes);
+
+    for keysize in keysizes {
+        println!("Trying keysize = {}", keysize);
+        let mut transposed_strings: Vec<String> = vec![String::from(""); keysize];
+        for idx_char in input.iter().cloned().enumerate() {
+            transposed_strings[idx_char.0 % keysize].push(idx_char.1 as char);
+        }
+
+        let mut _key = String::new();
+    }
     Ok(())
 }
