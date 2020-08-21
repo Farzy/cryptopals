@@ -41,7 +41,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
              (input[0..keysize].hamming_distance(&input[keysize..(2 * keysize)])) as f64
                  / (keysize as f64)));
 
-        // Compute hamming distance between the first 4 blocks of lenght "keysize", take the average
+        // Compute hamming distance between the first 4 blocks of length "keysize", take the average
         let mut sum = 0.0;
         for i in 0..3 {
             sum += input[(0 * keysize)..((0 + 1) * keysize)]
@@ -50,6 +50,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
         sum /= 3.0 * (keysize as f64);
         keysize_distances2.push((keysize, sum));
     }
+    // We now have the hamming distances for a variety of key sizes, computer in two different ways
     keysize_distances.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
     keysize_distances2.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
     println!("Keysize scores 1: {:?}",
@@ -69,12 +70,18 @@ pub fn main() -> Result<(), Box<dyn Error>> {
     let keysizes: Vec<_> = keysize_set.iter().cloned().collect();
     println!("Most popular key sizes from first 2*3 entries: {:?}", keysizes);
 
+    // Prepare the english corpus frequency table
     let corpus_freq = english::get_english_frequency()?;
 
     let mut best_euclidean_score = f64::INFINITY;
     let mut best_key = String::new();
     let mut best_text = String::new();
 
+    // Now try to:
+    // - guess a key for each key size
+    // - decrypt input
+    // - compute the euclidean distance of the decrypted text's frequency table to the English corpus
+    // - keep the key / key size with the best result
     for keysize in keysizes {
         println!("Trying keysize = {}", keysize);
         let mut transposed_strings: Vec<String> = vec![String::with_capacity(input.len() / keysize); keysize];
