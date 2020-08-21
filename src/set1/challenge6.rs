@@ -35,11 +35,13 @@ pub fn main() -> Result<(), Box<dyn Error>> {
     let mut keysize_distances: Vec<(usize, f64)> = Vec::with_capacity(KEYSIZE_RANGE.len());
     let mut keysize_distances2: Vec<(usize, f64)> = Vec::with_capacity(KEYSIZE_RANGE.len());
     for keysize in KEYSIZE_RANGE {
+        // Compute hamming distance between the first 2 blocks of length "keysize"
         keysize_distances.push(
             (keysize,
              (input[0..keysize].hamming_distance(&input[keysize..(2 * keysize)])) as f64
                  / (keysize as f64)));
 
+        // Compute hamming distance between the first 4 blocks of lenght "keysize", take the average
         let mut sum = 0.0;
         for i in 0..3 {
             sum += input[(0 * keysize)..((0 + 1) * keysize)]
@@ -60,10 +62,12 @@ pub fn main() -> Result<(), Box<dyn Error>> {
                  .collect::<Vec<_>>().join(", "));
 
     // Keep union for best keysizes
-    let keysize_set: HashSet<usize> = keysize_distances[0..3].iter().map(|k| k.0).collect();
-    let keysize_set2: HashSet<usize> = keysize_distances2[0..3].iter().map(|k| k.0).collect();
-    let keysizes: Vec<_> = keysize_set.union(&keysize_set2).cloned().collect();
-    println!("Most popular key sizes from first 3 entries: {:?}", keysizes);
+    let mut keysize_set: HashSet<usize> = keysize_distances[0..3].iter().map(|k| k.0).collect();
+    for keysize in &keysize_distances2[0..3] {
+        keysize_set.insert(keysize.0);
+    }
+    let keysizes: Vec<_> = keysize_set.iter().cloned().collect();
+    println!("Most popular key sizes from first 2*3 entries: {:?}", keysizes);
 
     let corpus_freq = english::get_english_frequency()?;
 
@@ -73,7 +77,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
 
     for keysize in keysizes {
         println!("Trying keysize = {}", keysize);
-        let mut transposed_strings: Vec<String> = vec![String::from(""); keysize];
+        let mut transposed_strings: Vec<String> = vec![String::with_capacity(input.len() / keysize); keysize];
         for idx_char in input.iter().cloned().enumerate() {
             transposed_strings[idx_char.0 % keysize].push(idx_char.1 as char);
         }
