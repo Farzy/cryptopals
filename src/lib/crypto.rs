@@ -123,11 +123,11 @@ impl HexString for str {
             .bytes()
             // Remove return chars all the while adjusting array length
             .filter(|&b| {
-                if b != '\n' as u8 && b != '\r' as u8 {
-                    return true;
+                if b != b'\n' && b != b'\r' {
+                    true
                 } else {
                     *b64_length.borrow_mut() -= 1;
-                    return false;
+                    false
                 }
             })
             .enumerate()

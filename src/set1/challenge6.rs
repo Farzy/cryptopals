@@ -44,7 +44,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
         // Compute hamming distance between the first 4 blocks of length "keysize", take the average
         let mut sum = 0.0;
         for i in 0..3 {
-            sum += input[(0 * keysize)..((0 + 1) * keysize)]
+            sum += input[0..keysize]
                 .hamming_distance(&input[((i + 1) * keysize)..((i + 2) * keysize)]) as f64;
         }
         sum /= 3.0 * (keysize as f64);
