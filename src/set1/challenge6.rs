@@ -50,7 +50,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
         sum /= 3.0 * (keysize as f64);
         keysize_distances2.push((keysize, sum));
     }
-    // We now have the hamming distances for a variety of key sizes, computer in two different ways
+    // We now have the hamming distances for a variety of key sizes, computed by two different methods
     keysize_distances.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
     keysize_distances2.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
     println!("Keysize scores 1: {:?}",
