@@ -104,8 +104,8 @@ pub fn euclidean_distance(freq1: &[f64], freq2: &[f64]) -> f64 {
 /// The code supposes that the text is formatted in Project Gutenberg's
 /// style.
 pub fn get_gutenberg_corpus(url: &str) -> Result<String, Box<dyn error::Error>> {
-    const GUTENBERG_START_MARKER: &str = "*** START OF THIS PROJECT GUTENBERG EBOOK";
-    const GUTENBERG_END_MARKER: &str = "*** END OF THIS PROJECT GUTENBERG EBOOK";
+    const GUTENBERG_START_MARKER: &str = "*** START OF THE PROJECT GUTENBERG EBOOK";
+    const GUTENBERG_END_MARKER: &str = "*** END OF THE PROJECT GUTENBERG EBOOK";
 
     debug!("Using {} as English corpus", url);
 
